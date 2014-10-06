@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html ng-app>
+ <head>
+  <script 
+    src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.5/angular.min.js">
+  </script>
+  </head>
+<body>
+
+<div>
+   <canvas id="tttCanvas" width="600" height="600" style="border:1px solid #000000;"></canvas>
+</div>
+
+
+</body>
+</html>
+<script>
+
+/*
+ttt is the model for the boards, and holds all relevant data to the board. For those complaining about my lack of vars in the function head you can bite me. I do it everywhere else. This my code. Go write your own. I don't like my function head to be all cluttered with unnecessary garbage. This isn't C, it's Javascript. It's not the kid you want to play with. It's the loser kid your parents force you to play with.
+*/ 
+function tttBoard(fill, xPoint, yPoint, length, width) {
+   this.xPoint = xPoint;
+   this.yPoint = yPoint;
+   this.length = length;
+   this.width = width;
+   this.fill = fill;
+   this.build = buildTTT;
+   this.miniTTT = buildMinis;
+   this.oCoors = null;
+   this.xCoors = null;
+}
+
+/* 
+BuildTTT draws the board on the canvas. It takes in the colour for the lines,
+so that the scheme could be easily altered, and lines easily erased.
+The only other dependent element is the name of the canvas.
+
+Rectangles were less code for those wondering why not stroke here. Plus colouring was simpler. Don't be such a hater.
+*/
+function buildTTT() {
+   var third = this.length / 3;
+   var canvas = document.getElementById("tttCanvas");
+   var context = canvas.getContext("2d");
+
+   context.fillStyle = this.fill;
+   context.fillRect(this.xPoint + third - this.width, this.yPoint, this.width, this.length);
+   context.fillRect(this.xPoint + 2 * third, this.yPoint, this.width, this.length);
+   context.fillRect(this.xPoint, this.yPoint + third - this.width, this.length, this.width);
+   context.fillRect(this.xPoint, this.yPoint + third * 2, this.length, this.width);
+   this.oCoors = setCentres(this.xPoint, this.yPoint, third, this.width);
+   this.xCoors = setCrossPoints(this.oCoors, third);
+}
+
+/*   
+buildMinis creates a board in each space of the larger board. It's a loop function. Kinda obvious I think, but you could be an idiot. 
+*/
+function buildMinis() {
+   var third = this.length / 3;
+   var xMark = (third - third * 0.9) / 2 + this.xPoint - 2;
+   var yMark = (third - third * 0.9) / 2 + this.yPoint - 2;
+   var coors = calculateCoors(xMark, yMark, this.length, this.width);
+
+   for (var alice = 0; alice < 9; ++alice) {
+      var mini = new tttBoard("#999999", coors[alice][0], coors[alice][1], (this.length * 0.9 - this.width * 2) / 3, 4);
+      mini.build();
+      setBoard(alice, mini);
+   }
+}
+
+/*
+calculateCoors takes in an x and y coordinate in order to get the start point for each tic tac toe game within the larger game.
+It also requires the length of the larger game in order to easily align each mini game.  
+
+The number added to xMark and ymark increments compensates for the width of the larger game's lines.
+It is not a perfect alignment for those with OCD. It looks fine, so let it go.
+*/
+function calculateCoors(xPoint, yPoint, length, width) {
+   var third = length / 3;
+   var xMark = xPoint;
+   var yMark = yPoint;
+   var coors = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+
+   for (var alice = 0; alice < 3; ++alice) {
+      for (var bob = 0; bob < 9; bob += 3) {
+         coors[bob + alice][0] = xMark;
+         coors[bob + alice][1] = yMark;
+         yMark += third + width;
+      }
+      yMark = yPoint;
+      xMark += third + width;
+   }
+   return coors;
+}
+
+function setCentres(xPoint, yPoint, third, width) {
+   var centres = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+   var xMark = xPoint - width + 2 + third / 2;
+   var yMark = yPoint - width + 2  + third / 2;
+   var xPoints = [xMark, xMark + third + width/2,  xMark + third * 2 + width * 3/2];
+   var yPoints = [yMark, yMark + third + width/2,  yMark + third * 2 + width * 3/2];
+
+   for (var alice = 0; alice < 3; ++alice) {
+      centres[alice][0] = xPoints[alice];
+      centres[alice + 3][0] = xPoints[alice];
+      centres[alice + 6][0] = xPoints[alice];
+   }
+   for (var bob = 0; bob < 9; bob += 3) {
+      centres[bob][1] = yPoints[bob/3]
+      centres[bob + 1][1] = yPoints[bob / 3]
+      centres[bob + 2][1] = yPoints[bob / 3]
+   }
+   return centres;
+}
+
+function setCrossPoints(centres, third) {
+   var points = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+   var sixth = third / 3;
+   
+   for (var alice = 0; alice < 9; ++alice) {
+      points[alice][0] = centres[alice][0] - sixth;
+      points[alice][1] = centres[alice][1] - sixth;
+      points[alice][2] = centres[alice][0] + sixth;
+      points[alice][3] = centres[alice][1] + sixth;
+   }
+   return points;
+}
+
+/*
+makeX creates an x 
+*/
+function makeX(board, position, width, fill) {
+   var canvas = document.getElementById("tttCanvas");
+   var context = canvas.getContext("2d");
+
+   context.strokeStyle = fill;
+   context.lineWidth = width;
+   context.moveTo(board[position][0], board[position][1]);
+   context.lineTo(board[position][2], board[position][3]);
+   context.stroke();
+   context.moveTo(board[position][0], board[position][3]);
+   context.lineTo(board[position][2], board[position][1]);
+   context.stroke();
+}
+
+function makeO(board, position, radius, width, fill) {
+   var canvas = document.getElementById("tttCanvas");
+   var context = canvas.getContext("2d");
+   var third = board.length / 3;
+
+   context.strokeStyle = fill;
+   context.beginPath();
+   context.arc(board[position][0], board[position][1], radius, 0, 2*Math.PI);
+   context.lineWidth = width;
+   context.stroke();
+}
+
+function setBoard(position, board) {
+   if (position === 0) {
+      one = board;
+   }
+   if (position === 1) {
+      two = board;
+   }
+   if (position === 2) {
+      three = board;
+   }
+   if (position === 3) {
+      four = board;
+   }
+   if (position === 4) {
+      five = board;
+   }
+   if (position === 5) {
+      six = board;
+   }
+   if (position === 6) {
+      seven = board;
+   }
+   if (position === 7) {
+      eight = board;
+   }
+   nine = board;
+}
+
+function getBoard(position) {
+   if (position === 1) {
+      return one;
+   }
+   if (position === 2) {
+      return two;
+   }
+   if (position === 3) {
+      return three;
+   }
+   if (position === 4) {
+      return four;
+   }
+   if (position === 5) {
+      return five;
+   }
+   if (position === 6) {
+      return six;
+   }
+   if (position === 7) {
+      return seven;
+   }
+   if (position === 8) {
+      return eight;
+   }
+   return nine;
+}
+
+var game = new tttBoard("#000000", (300 - 300 * 0.95) / 2, (300 - 300 * 0.95) / 2, 300 * 0.95, 5);
+var one, two, three, four, five, six, seven, eight, nine;
+
+game.build();
+game.miniTTT();
+</script>
