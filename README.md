@@ -1,7 +1,7 @@
 Ultimate Noughts and Crosses
 ==============================
 
-This version of ultimate tic tac toe is my project for learning AngularJS, and p.
+This version of ultimate tic tac toe is my project for learning AngularJS, and play with HTML canvas.
 When playable it will be available on my profile website (under construction).
 This project is also meant to practice AI development, which when completed will be added to the site.
 All code will be original.
